@@ -2,3 +2,8 @@ node_modules
 dist
 .DS_Store
 *.local
+
+# Staged release output. Built with `npx vite build --base=./` and zipped for
+# GitHub Releases. Generated, never edited, never committed - the release
+# artifact belongs on the Releases page, not in the history.
+release/
