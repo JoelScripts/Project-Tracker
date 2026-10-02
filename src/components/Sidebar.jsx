@@ -78,6 +78,10 @@ export default function Sidebar({ open, onToggle }) {
 
   const doImport = (file) => {
     if (!file) return;
+    if (file.size === 0) {
+      setStatus({ kind: 'bad', text: `“${file.name}” is empty (0 bytes). Pick the .json file from your downloads folder.` });
+      return;
+    }
     const reader = new FileReader();
 
     reader.onload = () => {

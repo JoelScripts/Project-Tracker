@@ -41,9 +41,19 @@ export function serializeBackup(state) {
  * rather than half-applied. Throws with a message worth showing to a person.
  */
 export function parseBackup(text) {
+  // Strip BOM + surrounding whitespace: some editors / download paths add
+  // them, and JSON.parse rejects a lone BOM. Empty after stripping means an
+  // empty file, which deserves its own message rather than "not valid JSON".
+  const clean = String(text ?? '').replace(/^﻿/, '').trim();
+  if (!clean) {
+    throw new Error('That file is empty. Pick the .json file from your downloads folder.');
+  }
+  if (clean[0] === '<') {
+    throw new Error('That file looks like a web page, not a backup. Pick the .json export.');
+  }
   let parsed;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(clean);
   } catch {
     throw new Error('That file is not valid JSON.');
   }
