@@ -8,6 +8,7 @@ import {
   saveExport,
 } from '../exportTarget';
 import { parseBackup, serializeBackup, summarize, useStore } from '../store.jsx';
+import BackupTextModal from './BackupTextModal.jsx';
 import Icon from './Icon.jsx';
 
 export default function Sidebar({ open, onToggle }) {
@@ -16,6 +17,7 @@ export default function Sidebar({ open, onToggle }) {
   const [name, setName] = useState('');
   const [status, setStatus] = useState(null);
   const [folder, setFolder] = useState(null);
+  const [backupText, setBackupText] = useState(null);
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -206,6 +208,13 @@ export default function Sidebar({ open, onToggle }) {
               e.target.value = '';   // so re-picking the same file fires again
             }}
           />
+          <button
+            className="linkish"
+            onClick={() => setBackupText(serializeBackup(state))}
+            title="Show the backup as text for manual copy (works where file export cannot)"
+          >
+            Show backup text…
+          </button>
         </div>
 
         {canChooseLocation() && (
@@ -265,6 +274,13 @@ export default function Sidebar({ open, onToggle }) {
           </p>
         )}
       </footer>
+      {backupText !== null && (
+        <BackupTextModal
+          text={backupText}
+          fileName={datedName()}
+          onClose={() => setBackupText(null)}
+        />
+      )}
     </aside>
   );
 }

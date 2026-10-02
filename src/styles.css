@@ -1000,6 +1000,25 @@ button {
   line-height: 1.6;
 }
 
+/* Backup-as-text modal: the last-resort export. Monospace, tall, readonly. */
+.backup-text {
+  width: 100%;
+  min-height: 38vh;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+.backup-text:focus {
+  border-color: var(--accent);
+}
+
 /* ---------- overlays ----------------------------------------------------- */
 
 .scrim {
