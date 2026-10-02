@@ -333,6 +333,54 @@ button {
   text-transform: none;
 }
 
+/*
+  Where the next export will land. Sits under the buttons because it is the
+  answer to "where did that file go?", which is the whole reason this feature
+  exists — so it names the folder rather than saying "saved".
+*/
+.sidebar__where {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-faint);
+}
+
+.sidebar__where b {
+  color: var(--text, #e6e8ee);
+  font-weight: 600;
+}
+
+/* Inline text action. Deliberately not a .btn: it must read as a footnote,
+   not compete with Export/Import for attention. */
+.linkish {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.linkish:hover {
+  color: var(--text, #e6e8ee);
+}
+
+.linkish:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .sidebar__msg {
   margin: 9px 0 0;
   font-size: 11px;

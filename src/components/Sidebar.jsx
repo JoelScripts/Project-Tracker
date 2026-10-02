@@ -1,21 +1,38 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  canChooseLocation,
+  datedName,
+  forgetDirectory,
+  loadDirectory,
+  saveExport,
+} from '../exportTarget';
 import { parseBackup, serializeBackup, summarize, useStore } from '../store.jsx';
 import Icon from './Icon.jsx';
-
-const stamp = () => new Date().toISOString().slice(0, 10);
 
 export default function Sidebar({ open, onToggle }) {
   const { state, dispatch } = useStore();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [status, setStatus] = useState(null);
+  const [folder, setFolder] = useState(null);
   const fileRef = useRef(null);
 
   useEffect(() => {
     if (!status) return undefined;
-    const t = setTimeout(() => setStatus(null), 5000);
+    const t = setTimeout(() => setStatus(null), 6000);
     return () => clearTimeout(t);
   }, [status]);
+
+  // A stored handle is only useful if it survived, so read it once on mount.
+  useEffect(() => {
+    let live = true;
+    loadDirectory().then((dir) => {
+      if (live && dir) setFolder(dir.name || 'chosen folder');
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const submit = (e) => {
     e.preventDefault();
@@ -26,21 +43,38 @@ export default function Sidebar({ open, onToggle }) {
 
   const counts = summarize(state);
 
-  const doExport = () => {
-    const blob = new Blob([serializeBackup(state)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `project-tracker-${stamp()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  const runExport = useCallback(
+    async (forceDialog) => {
+      const text = serializeBackup(state);
+      const result = await saveExport({
+        text,
+        suggestedName: datedName(),
+        forceDialog,
+      });
+
+      if (result.cancelled) return;                 // user closed the dialog: stay quiet
+      if (!result.ok) {
+        setStatus({ kind: 'bad', text: result.error || 'The export failed.' });
+        return;
+      }
+      setFolder(result.where && canChooseLocation() ? result.where : folder);
+      setStatus({
+        kind: 'ok',
+        text: `Exported ${counts.boards} board(s), ${counts.tasks} task(s) to ${result.where}. Keep this file safe — it is your copy.`,
+      });
+    },
+    // counts/folder are only read for the status line
+    [state, counts.boards, counts.tasks, folder]
+  );
+
+  const changeLocation = useCallback(async () => {
+    await forgetDirectory();
+    setFolder(null);
     setStatus({
       kind: 'ok',
-      text: `Exported ${counts.boards} board(s), ${counts.tasks} task(s). Keep this file safe — it is your copy.`,
+      text: 'Export folder cleared — the next export will ask where to save.',
     });
-  };
+  }, []);
 
   const doImport = (file) => {
     if (!file) return;
@@ -151,7 +185,7 @@ export default function Sidebar({ open, onToggle }) {
         </p>
 
         <div className="sidebar__actions">
-          <button className="btn btn--sm btn--block" onClick={doExport}>
+          <button className="btn btn--sm btn--block" onClick={() => runExport(false)}>
             <Icon name="download" size={14} /> Export
           </button>
           <button className="btn btn--sm btn--block" onClick={() => fileRef.current?.click()}>
@@ -168,6 +202,38 @@ export default function Sidebar({ open, onToggle }) {
             }}
           />
         </div>
+
+        {canChooseLocation() && (
+          <div className="sidebar__where">
+            <span className="sidebar__where-label">
+              {folder ? (
+                <>
+                  Saves to <b>{folder}</b>
+                </>
+              ) : (
+                'No folder chosen — export will ask'
+              )}
+            </span>
+            {folder ? (
+              <>
+                <button
+                  className="linkish"
+                  onClick={() => runExport(true)}
+                  title="Choose a different folder for exports"
+                >
+                  Change
+                </button>
+                <button className="linkish" onClick={changeLocation} title="Forget the chosen folder">
+                  Forget
+                </button>
+              </>
+            ) : (
+              <button className="linkish" onClick={() => runExport(true)}>
+                Choose folder…
+              </button>
+            )}
+          </div>
+        )}
 
         {status && (
           <p className={`sidebar__msg sidebar__msg--${status.kind}`} role="status">
