@@ -224,6 +224,14 @@ export async function saveExport({ text, suggestedName, forceDialog = false }) {
     return { ok: true, where: 'your chosen folder' };
   } catch (err) {
     if (err?.name === 'AbortError') return { ok: false, cancelled: true };
-    return { ok: false, error: err?.message || 'The file could not be saved.' };
+    // Host allows the picker but blocks the write (review iframe, WebView,
+    // insecure context): showSaveFilePicker resolves, then createWritable
+    // throws NotAllowedError. Fall back to <a download> so export still works.
+    try {
+      downloadViaAnchor(text, name);
+      return { ok: true, where: 'your browser’s downloads folder' };
+    } catch {
+      return { ok: false, error: err?.message || 'The file could not be saved.' };
+    }
   }
 }
