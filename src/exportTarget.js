@@ -26,7 +26,42 @@ const HANDLE_KEY = 'exportDirectory';
 
 /** True when the browser can show a real save dialog. */
 export const canChooseLocation = () =>
-  typeof window !== 'undefined' && typeof window.showSaveFilePicker === 'function';
+  typeof window !== 'undefined' &&
+  typeof window.showSaveFilePicker === 'function' &&
+  !fsWritesBlocked();
+
+// --- host capability --------------------------------------------------------
+// Some hosts expose showSaveFilePicker but block the actual write: the picker
+// resolves, then createWritable() throws NotAllowedError, leaving an empty
+// 0-byte shell where the user pointed. Once that happens, stop offering the
+// picker in this browser and go straight to <a download>.
+const FS_BLOCKED_KEY = 'project-tracker.fsBlocked';
+
+export function fsWritesBlocked() {
+  if (markFsBlocked.memory) return true;
+  try {
+    return localStorage.getItem(FS_BLOCKED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markFsBlocked() {
+  try {
+    localStorage.setItem(FS_BLOCKED_KEY, '1');
+  } catch {
+    /* memory-only fallback below */
+  }
+  markFsBlocked.memory = true;
+}
+
+/** The platform refused a write (not a user cancel, not a stale handle). */
+function isPlatformBlock(err) {
+  if (!err || err.name === 'AbortError') return false;
+  if (err.name === 'NotAllowedError' || err.name === 'SecurityError') return true;
+  const msg = String(err?.message || '').toLowerCase();
+  return msg.includes('not allowed') && msg.includes('current context');
+}
 
 // --- IndexedDB (promisified, degrades to null) ------------------------------
 
@@ -195,10 +230,22 @@ export async function saveExport({ text, suggestedName, forceDialog = false }) {
         await writeInto(remembered, stampedName(), text);
         return { ok: true, where: remembered.name || 'your chosen folder' };
       } catch (err) {
+        if (err?.name === 'AbortError') return { ok: false, cancelled: true };
+        if (isPlatformBlock(err)) {
+          // Host blocks writes entirely: skip the dialog (it would only make
+          // another empty shell) and go straight to downloads.
+          markFsBlocked();
+          await forgetDirectory();
+          try {
+            downloadViaAnchor(text, name);
+            return { ok: true, where: 'your browser’s downloads folder' };
+          } catch {
+            return { ok: false, error: err?.message || 'The file could not be saved.' };
+          }
+        }
         // Stale permission, folder deleted, disk full. Fall through to the
         // dialog rather than silently failing.
         await forgetDirectory();
-        if (err?.name === 'AbortError') return { ok: false, cancelled: true };
       }
     }
   }
@@ -226,7 +273,10 @@ export async function saveExport({ text, suggestedName, forceDialog = false }) {
     if (err?.name === 'AbortError') return { ok: false, cancelled: true };
     // Host allows the picker but blocks the write (review iframe, WebView,
     // insecure context): showSaveFilePicker resolves, then createWritable
-    // throws NotAllowedError. Fall back to <a download> so export still works.
+    // throws NotAllowedError. Remember that so the next export skips the
+    // picker instead of leaving another empty file behind, then fall back to
+    // <a download> so this export still lands somewhere real.
+    if (isPlatformBlock(err)) markFsBlocked();
     try {
       downloadViaAnchor(text, name);
       return { ok: true, where: 'your browser’s downloads folder' };
