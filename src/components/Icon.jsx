@@ -66,6 +66,18 @@ const paths = {
     </>
   ),
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  download: (
+    <>
+      <path d="M12 4v10M8 11l4 4 4-4" />
+      <path d="M5 19h14" />
+    </>
+  ),
+  upload: (
+    <>
+      <path d="M12 15V5M8 8l4-4 4 4" />
+      <path d="M5 19h14" />
+    </>
+  ),
   inbox: (
     <>
       <path d="M4 13h4l2 3h4l2-3h4" />

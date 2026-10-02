@@ -278,10 +278,13 @@ button {
   padding: 4px 6px;
 }
 
+/*
+  Footer now stacks: the status line keeps the old uppercase look, and the
+  export/import block sits under it. Uppercase + tracked is wrong for the
+  buttons and the hint, so those opt back out below.
+*/
 .sidebar__foot {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
   font-family: var(--font-mono);
   font-size: 10.5px;
   letter-spacing: 0.08em;
@@ -291,12 +294,71 @@ button {
   border-top: 1px solid var(--line);
 }
 
+.sidebar__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .sidebar__foot .dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--ok);
   box-shadow: 0 0 8px rgba(74, 222, 128, 0.7);
+}
+
+.sidebar__hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sidebar__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/*
+  Driven by their own labels rather than a <label for>, so the buttons must
+  read as one row that fills the rail. Kept off-screen rather than display:none
+  so the input stays in the tab order.
+*/
+.sidebar__actions .btn {
+  flex: 1;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.sidebar__msg {
+  margin: 9px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sidebar__msg--ok {
+  color: var(--ok);
+}
+
+.sidebar__msg--bad {
+  color: var(--danger);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ---------- top bar ------------------------------------------------------ */
