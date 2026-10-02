@@ -55,6 +55,16 @@ function markFsBlocked() {
   markFsBlocked.memory = true;
 }
 
+/** Clear a recorded block (the "try folder save again" affordance). */
+export function resetFsBlock() {
+  markFsBlocked.memory = false;
+  try {
+    localStorage.removeItem(FS_BLOCKED_KEY);
+  } catch {
+    /* nothing to do */
+  }
+}
+
 /** The platform refused a write (not a user cancel, not a stale handle). */
 function isPlatformBlock(err) {
   if (!err || err.name === 'AbortError') return false;

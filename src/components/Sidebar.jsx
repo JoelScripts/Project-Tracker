@@ -4,6 +4,7 @@ import {
   datedName,
   forgetDirectory,
   loadDirectory,
+  resetFsBlock,
   saveExport,
 } from '../exportTarget';
 import { parseBackup, serializeBackup, summarize, useStore } from '../store.jsx';
@@ -238,6 +239,25 @@ export default function Sidebar({ open, onToggle }) {
             )}
           </div>
         )}
+        {!canChooseLocation() &&
+          typeof window !== 'undefined' &&
+          typeof window.showSaveFilePicker === 'function' && (
+            <div className="sidebar__where">
+              <span className="sidebar__where-label">
+                Folder save is blocked in this browser — using downloads.
+              </span>
+              <button
+                className="linkish"
+                onClick={() => {
+                  resetFsBlock();
+                  runExport(true);
+                }}
+                title="Retry the folder dialog (leaves an empty file here if this browser still blocks writes)"
+              >
+                Try folder…
+              </button>
+            </div>
+          )}
 
         {status && (
           <p className={`sidebar__msg sidebar__msg--${status.kind}`} role="status">
