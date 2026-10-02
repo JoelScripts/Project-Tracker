@@ -61,7 +61,7 @@ export default function Sidebar({ open, onToggle }) {
       setFolder(result.where && canChooseLocation() ? result.where : folder);
       setStatus({
         kind: 'ok',
-        text: `Exported ${counts.boards} board(s), ${counts.tasks} task(s) to ${result.where}. Keep this file safe — it is your copy.`,
+        text: `Exported ${counts.boards} board(s), ${counts.tasks} task(s) (${(text.length / 1024).toFixed(1)} KB) to ${result.where}. Keep this file safe — it is your copy.`,
       });
     },
     // counts/folder are only read for the status line
